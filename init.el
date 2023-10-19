@@ -11,6 +11,10 @@
 ;; Make ESC quit prompts
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 
+;; Make it so C-x f and C-x C-f both find file
+;; Make ESC quit prompts
+(global-set-key (kbd "C-x f") 'find-file)
+
 ;; Initialize package sources
 (require 'package)
 
@@ -35,8 +39,8 @@
 (require 'use-package)
 (setq use-package-always-ensure t)
 
-(column-number-mode)
-(global-display-line-numbers-mode t)
+(column-number-mode) ; Allow display of line number
+(global-display-line-numbers-mode t) ; Activate display of line number
 
 ;; Disable line numbers for some modes
 (dolist (mode '(org-mode-hook
@@ -71,14 +75,23 @@
   :config
   (ivy-mode 1))
 
-(use-package gruvbox-theme)
-(load-theme 'gruvbox-dark-hard t)
+;; The theme overrides line numbers scaling with text scale somehow...
+;(use-package gruvbox-theme)
+;(load-theme 'gruvbox-dark-hard t)
+
+(use-package ef-themes
+  :ensure t)
+;; Use ef-themes-toggle to cycle through these
+(setq ef-themes-to-toggle '(ef-autumn ef-symbiosis ef-maris-dark ef-elea-dark ef-duo-dark ef-dark ef-night))
+;; Change this to change the default theme
+(load-theme 'ef-autumn :no-confirm)
+
 
 ;; This changes the bar at the bottom of the screen
 (use-package doom-modeline
   :ensure t
   :init (doom-modeline-mode 1)
-  :custom ((doom-modeline-height 15)))
+  :custom ((doom-modeline-height 20)))
 
 ;; Doom modeline only works with these and not "all-the-icons" anymore
 (use-package nerd-icons
@@ -168,13 +181,15 @@
   :hook
   ((python-mode . eglot-ensure)))
 
+(add-hook 'python-mode-hook (lambda () fill-column 120))
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
-   '(csv-mode company-box company poetry python-mode magit helpful ivy-rich which-key rainbow-delimiters doom-modeline all-the-icons gruvbox-theme counsel command-log-mode)))
+   '(ef-themes csv-mode company-box company poetry python-mode magit helpful ivy-rich which-key rainbow-delimiters doom-modeline all-the-icons gruvbox-theme counsel command-log-mode)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
