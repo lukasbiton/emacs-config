@@ -15,6 +15,10 @@
 ;; Make ESC quit prompts
 (global-set-key (kbd "C-x f") 'find-file)
 
+;; Under MacOS, ls does not have --dired available
+(when (string= system-type "darwin")       
+  (setq dired-use-ls-dired nil))
+
 ;; Initialize package sources
 (require 'package)
 
