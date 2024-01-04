@@ -6,6 +6,11 @@
 (tooltip-mode -1) ; Disable tooltips
 (set-fringe-mode 10) ; Give more breathing room
 
+(set-face-attribute 'default nil :height 80)
+
+(set-frame-parameter nil 'alpha-background 100) ; For current frame
+(add-to-list 'default-frame-alist '(alpha-background . 100)) ; For all new frames henceforth
+
 (menu-bar-mode -1) ; Disable the menu bar
 
 ;; Make ESC quit prompts
@@ -14,10 +19,6 @@
 ;; Make it so C-x f and C-x C-f both find file
 ;; Make ESC quit prompts
 (global-set-key (kbd "C-x f") 'find-file)
-
-;; Under MacOS, ls does not have --dired available
-(when (string= system-type "darwin")       
-  (setq dired-use-ls-dired nil))
 
 ;; Initialize package sources
 (require 'package)
@@ -47,12 +48,18 @@
 (global-display-line-numbers-mode t) ; Activate display of line number
 
 ;; Disable line numbers for some modes
-(dolist (mode '(org-mode-hook
-		term-mode-hook
+(dolist (mode '(term-mode-hook
 		eshell-mode-hook
 		shell-mode-hook
-		term-mode-hook))
+		term-mode-hook
+		vterm-mode-hook))
   (add-hook mode (lambda () (display-line-numbers-mode 0))))
+
+(dolist (mode '(org-mode-hook
+		python-mode-hook
+		c-mode-hook
+		c++-mode-hook))
+  (add-hook mode (lambda () (visual-line-mode 1))))
 
 (use-package counsel
   :bind (("M-x" . counsel-M-x)
@@ -80,16 +87,17 @@
   (ivy-mode 1))
 
 ;; The theme overrides line numbers scaling with text scale somehow...
-;(use-package gruvbox-theme)
-;(load-theme 'gruvbox-dark-hard t)
+;; (use-package gruvbox-theme)
+;; (load-theme 'gruvbox-dark-hard t)
 
 (use-package ef-themes
   :ensure t)
 ;; Use ef-themes-toggle to cycle through these
 (setq ef-themes-to-toggle '(ef-autumn ef-symbiosis ef-maris-dark ef-elea-dark ef-duo-dark ef-dark ef-night))
 ;; Change this to change the default theme
-(load-theme 'ef-autumn :no-confirm)
+(load-theme 'ef-symbiosis :no-confirm)
 
+;; (load-theme 'modus-vivendi)
 
 ;; This changes the bar at the bottom of the screen
 (use-package doom-modeline
@@ -181,11 +189,40 @@
 (use-package eglot
   :ensure t
   :config
-  (add-to-list 'eglot-server-programs '(python-mode . ("~/real-time-trade/.venv/bin/jedi-language-server"))) ;; Check where environment is set up
-  :hook
-  ((python-mode . eglot-ensure)))
+  (add-to-list 'eglot-server-programs '(python-mode . ("~/Projects/trading-bot/.venv/bin/jedi-language-server")))
+  (add-to-list 'eglot-server-programs '((c++-mode c-mode) . ("clangd"))))
+;;  :hook
+;;  (python-mode . #'eglot-ensure)
+;;  ('c++-mode-hook . #'eglot-ensure)
+;;  ('c-mode-hook . #'eglot-ensure))
+
+(setq eldoc-echo-area-use-multiline-p nil)
+
+(add-hook 'python-mode-hook 'eglot-ensure)
+(add-hook 'c-mode-hook 'eglot-ensure)
+(add-hook 'c++-mode-hook 'eglot-ensure)
 
 (add-hook 'python-mode-hook (lambda () fill-column 120))
+
+(use-package vterm
+  :ensure t
+  :bind (("C-c v" . vterm)))
+
+(unless (member "Symbols Nerd Font Mono" (font-family-list))
+  (nerd-icons-install-fonts))
+
+(use-package nerd-icons)
+
+(use-package nerd-icons-dired
+  :hook
+  (dired-mode . nerd-icons-dired-mode))
+
+(use-package good-scroll
+  :ensure t)
+
+(good-scroll-mode 1)
+
+
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -193,7 +230,7 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
-   '(ef-themes csv-mode company-box company poetry python-mode magit helpful ivy-rich which-key rainbow-delimiters doom-modeline all-the-icons gruvbox-theme counsel command-log-mode)))
+   '(good-scroll nerd-icons-dired vterm ef-themes csv-mode company-box company poetry python-mode magit helpful ivy-rich which-key rainbow-delimiters doom-modeline all-the-icons gruvbox-theme counsel command-log-mode)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
