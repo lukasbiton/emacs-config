@@ -1,3 +1,14 @@
+;;; package  --- Summary
+;; personalised init.el
+
+;;; Commentary:
+;; implements some quality of life improvements
+;; uses eglot for the language server protocol
+;; install vterm (with external installs needed)
+;; uses counsel and ivy for better navigation
+
+;;; Code:
+
 ;; No more intro messages about the tutorial
 (setq inhibit-startup-message t)
 
@@ -15,10 +26,6 @@
 
 ;; Make ESC quit prompts
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
-
-;; Make it so C-x f and C-x C-f both find file
-;; Make ESC quit prompts
-(global-set-key (kbd "C-x f") 'find-file)
 
 ;; Initialize package sources
 (require 'package)
@@ -64,31 +71,17 @@
 (use-package counsel
   :bind (("M-x" . counsel-M-x)
 	 ("C-x b" . counsel-ibuffer)
+	 ("C-x C-b" . counsel-ibuffer) ; I never use the alternative bind
 	 ("C-x C-f" . counsel-find-file)
-	 :map minibuffer-local-map
-	 ("C-r" . 'counsel-minibuffer-history)))
+	 ("C-x f" . counsel-find-file))) ; I never use the alternative bind
 
 (use-package ivy
   :diminish
   :bind (("C-s" . swiper)
 	 :map ivy-minibuffer-map
-	 ("TAB" . ivy-alt-done)
-	 ("C-l" . ivy-alt-done)
-	 ("C-j" . ivy-next-line)
-	 ("C-k" . ivy-previous-line)
-	 :map ivy-switch-buffer-map
-	 ("C-k" . ivy-previous-line)
-	 ("C-l" . ivy-done)
-	 ("C-d" . ivy-switch-buffer-kill)
-	 :map ivy-reverse-i-search-map
-	 ("C-k" . ivy-previous-line)
-	 ("C-d" . ivy-reverse-i-search-kill))
+	 ("TAB" . ivy-alt-done))
   :config
   (ivy-mode 1))
-
-;; The theme overrides line numbers scaling with text scale somehow...
-;; (use-package gruvbox-theme)
-;; (load-theme 'gruvbox-dark-hard t)
 
 (use-package ef-themes
   :ensure t)
@@ -96,8 +89,6 @@
 (setq ef-themes-to-toggle '(ef-autumn ef-symbiosis ef-maris-dark ef-elea-dark ef-duo-dark ef-dark ef-night))
 ;; Change this to change the default theme
 (load-theme 'ef-symbiosis :no-confirm)
-
-;; (load-theme 'modus-vivendi)
 
 ;; This changes the bar at the bottom of the screen
 (use-package doom-modeline
@@ -160,64 +151,87 @@
 
 (use-package company
   :ensure t
-  :hook (after-init . global-company-mode))
-  ;; :custom
-  ;; ;; Search other buffers with the same modes for completion instead of
-  ;; ;; searching all other buffers.
-  ;; (company-dabbrev-other-buffers t)
-  ;; (company-dabbrev-code-other-buffers t)
-  ;; ;; M-<num> to select an option according to its number.
-  ;; (company-show-numbers t)
-  ;; ;; Only 2 letters required for completion to activate.
-  ;; (company-minimum-prefix-length 3)
-  ;; ;; Do not downcase completions by default.
-  ;; (company-dabbrev-downcase nil)
-  ;; ;; Even if I write something with the wrong case,
-  ;; ;; provide the correct casing.
-  ;; (company-dabbrev-ignore-case t)
-  ;; ;; company completion wait
-  ;; (company-idle-delay 0.2)
-  ;; ;; No company-mode in shell & eshell
-;; (company-global-modes '(not eshell-mode shell-mode))
+  :hook (after-init . global-company-mode)
+  :custom
+  ;; M-<num> to select an option according to its number.
+  (company-show-numbers t)
+  ;; Only 2 letters required for completion to activate.
+  (company-minimum-prefix-length 2)
+  ;; Do not downcase completions by default.
+  (company-dabbrev-downcase nil)
+  ;; Even if I write something with the wrong case,
+  ;; provide the correct casing.
+  (company-dabbrev-ignore-case t)
+  ;; company completion wait
+  (company-idle-delay 0.2)
+  ;; No company-mode in shell & eshell
+  (company-global-modes '(not eshell-mode shell-mode)))
 
 (use-package company-box
   :hook (company-mode . company-box-mode))
 
-;; (use-package corfu
-;;   :init (global-corfu-mode))
-
 (use-package eglot
   :ensure t
   :config
-  (add-to-list 'eglot-server-programs '(python-mode . ("~/Projects/trading-bot/.venv/bin/jedi-language-server")))
   (add-to-list 'eglot-server-programs '((c++-mode c-mode) . ("clangd"))))
-;;  :hook
-;;  (python-mode . #'eglot-ensure)
-;;  ('c++-mode-hook . #'eglot-ensure)
-;;  ('c-mode-hook . #'eglot-ensure))
 
-(setq eldoc-echo-area-use-multiline-p nil)
-
+;; For some reason can't add this to use-package above
 (add-hook 'python-mode-hook 'eglot-ensure)
 (add-hook 'c-mode-hook 'eglot-ensure)
 (add-hook 'c++-mode-hook 'eglot-ensure)
 
+;; Allows pet below to find the shell path properly on macos
+;; will this break anything on linux?
+(use-package exec-path-from-shell
+  :if (memq (window-system) '(mac ns))
+  :config (exec-path-from-shell-initialize))
+
+;; Allows eglot to always find your python env when set with pyenv or poetry
+;; config stolen from github page
+(use-package pet
+  ;:ensure-system-package (dasel sqlite3)
+  :config
+  (add-hook 'python-mode-hook
+            (lambda ()
+              (setq-local python-shell-interpreter (pet-executable-find "python")
+                          python-shell-virtualenv-root (pet-virtualenv-root))
+
+              (pet-eglot-setup)
+              (eglot-ensure)
+
+              (setq-local lsp-jedi-executable-command
+                          (pet-executable-find "jedi-language-server")))))
+
+
+;; Don't blow out the minibuffer with company
+(setq eldoc-echo-area-use-multiline-p nil)
+
+;; Some extra python fluff
 (add-hook 'python-mode-hook (lambda () fill-column 120))
 
-(use-package vterm
-  :ensure t
-  :bind (("C-c v" . vterm)))
-
-(unless (member "Symbols Nerd Font Mono" (font-family-list))
+;; Download the font if it doesn't exist.
+;; Needed for nerd-icons to function
+(unless (member "Cousine Nerd Font" (font-family-list))
   (nerd-icons-install-fonts))
 
 (use-package nerd-icons)
 
+;; Show pretty icons in dired mode too
 (use-package nerd-icons-dired
   :hook
   (dired-mode . nerd-icons-dired-mode))
 
+;; Set the font everywhere
+(set-frame-font "Cousine Nerd Font 12" nil t)
+(setq doom-unicode-font (font-spec :family "Cousine Nerd Font" :size 11))
 
+;; Terminal replacement
+(use-package vterm
+  :ensure t
+  :bind (("C-c v" . vterm)))
+
+(when (string= system-type "darwin")
+  (setq dired-use-ls-dired nil))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -225,10 +239,12 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
-   '(nerd-icons-dired vterm ef-themes csv-mode company-box company poetry python-mode magit helpful ivy-rich which-key rainbow-delimiters doom-modeline all-the-icons gruvbox-theme counsel command-log-mode)))
+   '(exec-path-from-shell nerd-icons-dired vterm ef-themes csv-mode company-box company poetry python-mode magit helpful ivy-rich which-key rainbow-delimiters doom-modeline all-the-icons gruvbox-theme counsel command-log-mode)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
+
+;;; init.el ends here
