@@ -12,14 +12,21 @@
 ;; No more intro messages about the tutorial
 (setq inhibit-startup-message t)
 
+;; Save ~ files and other backups all together
+(setq backup-directory-alist '(("." . "~/.emacs.d/backup"))
+  backup-by-copying t    ; Don't delink hardlinks
+  version-control t      ; Use version numbers on backups
+  delete-old-versions t  ; Automatically delete excess backups
+  kept-new-versions 20   ; how many of the newest versions to keep
+  kept-old-versions 5    ; and how many of the old
+  )
+
 (scroll-bar-mode -1) ; Disable scroll bar
 (tool-bar-mode -1) ; Disable toolbar
 (tooltip-mode -1) ; Disable tooltips
 (set-fringe-mode 10) ; Give more breathing room
 
-(set-face-attribute 'default nil :height 80)
-
-(set-frame-parameter nil 'alpha-background 100) ; For current frame
+(set-frame-parameter nil 'alpha-background 100) ; For current frame, transparency
 (add-to-list 'default-frame-alist '(alpha-background . 100)) ; For all new frames henceforth
 
 (menu-bar-mode -1) ; Disable the menu bar
@@ -128,6 +135,16 @@
   ([remap describe-variable] . counsel-describe-variable)
   ([remap describe-key] . helpful-key))
 
+(use-package org-roam
+  :ensure t
+  :custom
+  (org-roam-directory "~/Notes")
+  :bind (("C-c n l" . org-roam-buffer-toggle)
+	 ("C-c n f" . org-roam-node-find)
+	 ("C-c n i" . org-roam-node-insert))
+  :config
+  (org-roam-db-autosync-mode))
+
 (use-package csv-mode
   :ensure t
   :hook (csv-mode . csv-align-mode))
@@ -225,6 +242,8 @@
 (set-frame-font "Cousine Nerd Font 12" nil t)
 (setq doom-unicode-font (font-spec :family "Cousine Nerd Font" :size 11))
 
+(set-face-attribute 'default nil :height 80)
+
 ;; Terminal replacement
 (use-package vterm
   :ensure t
@@ -238,6 +257,7 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(company-show-quick-access t nil nil "Customized with use-package company")
  '(package-selected-packages
    '(exec-path-from-shell nerd-icons-dired vterm ef-themes csv-mode company-box company poetry python-mode magit helpful ivy-rich which-key rainbow-delimiters doom-modeline all-the-icons gruvbox-theme counsel command-log-mode)))
 (custom-set-faces
