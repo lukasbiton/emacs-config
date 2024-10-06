@@ -75,21 +75,114 @@
 		c++-mode-hook))
   (add-hook mode (lambda () (visual-line-mode 1))))
 
-(use-package counsel
-  :bind (("M-x" . counsel-M-x)
-	 ("C-x b" . counsel-ibuffer)
-	 ("C-x C-b" . counsel-ibuffer) ; I never use the alternative bind
-	 ("C-x C-f" . counsel-find-file)
-	 ("C-x f" . counsel-find-file))) ; I never use the alternative bind
-
-(use-package ivy
-  :diminish
-  :bind (("C-s" . swiper)
-	 :map ivy-minibuffer-map
-	 ("TAB" . ivy-alt-done))
+(use-package treesit-auto
   :config
-  (ivy-mode 1))
+  (treesit-auto-add-to-auto-mode-alist 'all))
 
+(use-package vertico
+  :init (vertico-mode))
+
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages
+   '(embark-consult embark orderless treesit-auto which-key vterm vertico simple-httpd rainbow-delimiters pyenv-mode poetry pet org-roam nerd-icons-dired marginalia magit ivy-rich helpful gruvbox-theme good-scroll exec-path-from-shell ef-themes doom-modeline csv-mode counsel corfu consult company-box)))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
+
+;; Provides search and navigation commands
+(use-package consult
+  :bind
+  ("C-x b" . consult-buffer) 
+  ("C-x C-b" . consult-buffer)
+  ("M-g M-g" . consult-goto-line)
+  ("M-g g" . consult-goto-line))
+
+;; Backend completion style
+(use-package orderless
+  :ensure t
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-overrides '((file (styles basic partial-completion)))))
+
+;; Enable rich annotations using the Marginalia package
+(use-package marginalia
+  ;; Bind `marginalia-cycle' locally in the minibuffer.  To make the binding
+  ;; available in the *Completions* buffer, add it to the
+  ;; `completion-list-mode-map'.
+  :bind (:map minibuffer-local-map
+	      ("M-A" . marginalia-cycle))
+
+  ;; The :init section is always executed.
+  :init
+
+  ;; Marginalia must be activated in the :init section of use-package such that
+  ;; the mode gets enabled right away. Note that this forces loading the
+  ;; package.
+  (marginalia-mode))
+
+;; Suggests keybindings
+(use-package embark
+  :ensure t
+
+  :bind
+  (("C-." . embark-act)         ;; pick some comfortable binding
+   ("C-;" . embark-dwim)        ;; good alternative: M-.
+   ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
+
+  :init
+
+  ;; Optionally replace the key help with a completing-read interface
+  (setq prefix-help-command #'embark-prefix-help-command)
+
+  ;; Show the Embark target at point via Eldoc. You may adjust the
+  ;; Eldoc strategy, if you want to see the documentation from
+  ;; multiple providers. Beware that using this can be a little
+  ;; jarring since the message shown in the minibuffer can be more
+  ;; than one line, causing the modeline to move up and down:
+
+  ;; (add-hook 'eldoc-documentation-functions #'embark-eldoc-first-target)
+  ;; (setq eldoc-documentation-strategy #'eldoc-documentation-compose-eagerly)
+
+  :config
+
+  ;; Hide the mode line of the Embark live/completions buffers
+  (add-to-list 'display-buffer-alist
+               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                 nil
+                 (window-parameters (mode-line-format . none)))))
+
+;; Consult users will also want the embark-consult package.
+(use-package embark-consult
+  :ensure t ; only need to install it, embark loads it after consult if found
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
+
+
+(use-package corfu
+  ;; Optional customizations
+  :custom
+  (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
+  (corfu-auto t)                 ;; Enable auto completion
+  (corfu-separator ?\s)          ;; Orderless field separator
+  ;; (corfu-quit-at-boundary nil)   ;; Never quit at completion boundary
+  ;; (corfu-quit-no-match nil)      ;; Never quit, even if there is no match
+  ;; (corfu-preview-current nil)    ;; Disable current candidate preview
+  ;; (corfu-preselect 'prompt)      ;; Preselect the prompt
+  ;; (corfu-on-exact-match nil)     ;; Configure handling of exact matches
+  ;; (corfu-scroll-margin 5)        ;; Use scroll margin
+
+  ;; Enable Corfu globally.
+  :init
+  (global-corfu-mode))
+
+;; Make it pretty
 (use-package ef-themes
   :ensure t)
 ;; Use ef-themes-toggle to cycle through these
@@ -100,16 +193,16 @@
 ;; This changes the bar at the bottom of the screen
 (use-package doom-modeline
   :ensure t
-  :init (doom-modeline-mode 1)
-  :custom ((doom-modeline-height 20)))
+  :init (doom-modeline-mode 1))
 
 ;; Doom modeline only works with these and not "all-the-icons" anymore
 (use-package nerd-icons
   :ensure t)
 
-;; Make parentheses different colors to easily tell how they close
-(use-package rainbow-delimiters
-  :hook (prog-mode . rainbow-delimiters-mode))
+;; Show pretty icons in dired mode too
+(use-package nerd-icons-dired
+  :hook
+  (dired-mode . nerd-icons-dired-mode))
 
 ;; Gives more useful completion when you start typing a command
 (use-package which-key
@@ -118,74 +211,16 @@
   :config
   (setq which-key-idle-delay 0.5))
 
-;; Makes the stuff ivy shows more user-friendly, not sure it's useful?
-(use-package ivy-rich
-  :init
-  (ivy-rich-mode 1))
-
-;; Makes help interface more contextual
-(use-package helpful
-  :ensure t
-  :custom
-  (counsel-describe-function-function #'helpful-callable)
-  (counsel-describe-variable-function #'helpful-variable)
-  :bind
-  ([remap describe-function] . counsel-describe-function)
-  ([remap describe-command] . helpful-command)
-  ([remap describe-variable] . counsel-describe-variable)
-  ([remap describe-key] . helpful-key))
-
-(use-package org-roam
-  :ensure t
-  :custom
-  (org-roam-directory "~/Notes")
-  :bind (("C-c n l" . org-roam-buffer-toggle)
-	 ("C-c n f" . org-roam-node-find)
-	 ("C-c n i" . org-roam-node-insert))
-  :config
-  (org-roam-db-autosync-mode))
-
 (use-package csv-mode
   :ensure t
   :hook (csv-mode . csv-align-mode))
 
-;; git porcelain (porcelain = make it nice)
+;; git porcelain
 ;; Main control is C-x g
 (use-package magit
   :ensure t
   :config
   (setq magit-save-repository-buffers nil))
-
-(use-package pyenv-mode
-  :ensure t
-  :init
-  (setenv "WORKON_HOME" "~/.pyenv/versions"))
-
-(use-package poetry
-  :ensure t
-  :bind (("C-c p" . poetry)
-	 ("C-c r" . poetry-run)))
-
-(use-package company
-  :ensure t
-  :hook (after-init . global-company-mode)
-  :custom
-  ;; M-<num> to select an option according to its number.
-  (company-show-numbers t)
-  ;; Only 2 letters required for completion to activate.
-  (company-minimum-prefix-length 2)
-  ;; Do not downcase completions by default.
-  (company-dabbrev-downcase nil)
-  ;; Even if I write something with the wrong case,
-  ;; provide the correct casing.
-  (company-dabbrev-ignore-case t)
-  ;; company completion wait
-  (company-idle-delay 0.2)
-  ;; No company-mode in shell & eshell
-  (company-global-modes '(not eshell-mode shell-mode)))
-
-(use-package company-box
-  :hook (company-mode . company-box-mode))
 
 (use-package eglot
   :ensure t
@@ -196,12 +231,6 @@
 (add-hook 'python-mode-hook 'eglot-ensure)
 (add-hook 'c-mode-hook 'eglot-ensure)
 (add-hook 'c++-mode-hook 'eglot-ensure)
-
-;; Allows pet below to find the shell path properly on macos
-;; will this break anything on linux?
-(use-package exec-path-from-shell
-  :if (memq (window-system) '(mac ns))
-  :config (exec-path-from-shell-initialize))
 
 ;; Allows eglot to always find your python env when set with pyenv or poetry
 ;; config stolen from github page
@@ -219,52 +248,16 @@
               (setq-local lsp-jedi-executable-command
                           (pet-executable-find "jedi-language-server")))))
 
-
-;; Don't blow out the minibuffer with company
-(setq eldoc-echo-area-use-multiline-p nil)
-
-;; Some extra python fluff
-(add-hook 'python-mode-hook (lambda () fill-column 120))
-
 ;; Download the font if it doesn't exist.
 ;; Needed for nerd-icons to function
 (unless (member "Cousine Nerd Font" (font-family-list))
   (nerd-icons-install-fonts))
 
-(use-package nerd-icons)
-
-;; Show pretty icons in dired mode too
-(use-package nerd-icons-dired
-  :hook
-  (dired-mode . nerd-icons-dired-mode))
-
 ;; Set the font everywhere
-(set-frame-font "Cousine Nerd Font 12" nil t)
-(setq doom-unicode-font (font-spec :family "Cousine Nerd Font" :size 11))
-
-(set-face-attribute 'default nil :height 80)
+(set-frame-font "Cousine Nerd Font 10" nil t)
+(setq doom-unicode-font (font-spec :family "Cousine Nerd Font" :size 10))
 
 ;; Terminal replacement
 (use-package vterm
   :ensure t
   :bind (("C-c v" . vterm)))
-
-(when (string= system-type "darwin")
-  (setq dired-use-ls-dired nil))
-
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(company-show-quick-access t nil nil "Customized with use-package company")
- '(package-selected-packages
-   '(exec-path-from-shell nerd-icons-dired vterm ef-themes csv-mode company-box company poetry python-mode magit helpful ivy-rich which-key rainbow-delimiters doom-modeline all-the-icons gruvbox-theme counsel command-log-mode)))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
-
-;;; init.el ends here
