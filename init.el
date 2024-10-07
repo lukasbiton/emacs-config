@@ -82,27 +82,16 @@
 (use-package vertico
   :init (vertico-mode))
 
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(package-selected-packages
-   '(embark-consult embark orderless treesit-auto which-key vterm vertico simple-httpd rainbow-delimiters pyenv-mode poetry pet org-roam nerd-icons-dired marginalia magit ivy-rich helpful gruvbox-theme good-scroll exec-path-from-shell ef-themes doom-modeline csv-mode counsel corfu consult company-box)))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
-
 ;; Provides search and navigation commands
 (use-package consult
   :bind
   ("C-x b" . consult-buffer) 
-  ("C-x C-b" . consult-buffer)
+  ("C-x C-b" . consult-buffer) ; I never use the alternative bind
   ("M-g M-g" . consult-goto-line)
-  ("M-g g" . consult-goto-line))
+  ("M-g g" . consult-goto-line) ; I never use the alternative bind
+  ("C-x C-f" . consult-find)
+  ("C-x f" . consult-find) ; I never use the alternative bind
+  ("C-s" . consult-line))
 
 ;; Backend completion style
 (use-package orderless
@@ -188,7 +177,7 @@
 ;; Use ef-themes-toggle to cycle through these
 (setq ef-themes-to-toggle '(ef-autumn ef-symbiosis ef-maris-dark ef-elea-dark ef-duo-dark ef-dark ef-night))
 ;; Change this to change the default theme
-(load-theme 'ef-symbiosis :no-confirm)
+(load-theme 'ef-dark :no-confirm)
 
 ;; This changes the bar at the bottom of the screen
 (use-package doom-modeline
