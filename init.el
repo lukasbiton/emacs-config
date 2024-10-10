@@ -76,8 +76,11 @@
   (add-hook mode (lambda () (visual-line-mode 1))))
 
 (use-package treesit-auto
+  :custom
+  (treesit-auto-install 'prompt)
   :config
-  (treesit-auto-add-to-auto-mode-alist 'all))
+  (treesit-auto-add-to-auto-mode-alist 'all)
+  (global-treesit-auto-mode))
 
 (use-package vertico
   :init (vertico-mode))
@@ -89,7 +92,6 @@
   ("C-x C-b" . consult-buffer) ; I never use the alternative bind
   ("M-g M-g" . consult-goto-line)
   ("M-g g" . consult-goto-line) ; I never use the alternative bind
-  ("C-x C-f" . consult-find)
   ("C-x f" . consult-find) ; I never use the alternative bind
   ("C-s" . consult-line))
 
@@ -213,29 +215,7 @@
 
 (use-package eglot
   :ensure t
-  :config
-  (add-to-list 'eglot-server-programs '((c++-mode c-mode) . ("clangd"))))
-
-;; For some reason can't add this to use-package above
-(add-hook 'python-mode-hook 'eglot-ensure)
-(add-hook 'c-mode-hook 'eglot-ensure)
-(add-hook 'c++-mode-hook 'eglot-ensure)
-
-;; Allows eglot to always find your python env when set with pyenv or poetry
-;; config stolen from github page
-(use-package pet
-  ;:ensure-system-package (dasel sqlite3)
-  :config
-  (add-hook 'python-mode-hook
-            (lambda ()
-              (setq-local python-shell-interpreter (pet-executable-find "python")
-                          python-shell-virtualenv-root (pet-virtualenv-root))
-
-              (pet-eglot-setup)
-              (eglot-ensure)
-
-              (setq-local lsp-jedi-executable-command
-                          (pet-executable-find "jedi-language-server")))))
+  :hook ((python-ts-mode . eglot-ensure)))
 
 ;; Download the font if it doesn't exist.
 ;; Needed for nerd-icons to function
