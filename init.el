@@ -34,6 +34,9 @@
 ;; Make ESC quit prompts
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 
+;; Save emacs set-up on quitting
+(desktop-save-mode 1)
+
 ;; Initialize package sources
 (require 'package)
 
@@ -88,7 +91,7 @@
 ;; Provides search and navigation commands
 (use-package consult
   :bind
-  ("C-x b" . consult-buffer) 
+  ("C-x b" . consult-buffer)
   ("C-x C-b" . consult-buffer) ; I never use the alternative bind
   ("M-g M-g" . consult-goto-line)
   ("M-g g" . consult-goto-line) ; I never use the alternative bind
@@ -121,14 +124,12 @@
 ;; Suggests keybindings
 (use-package embark
   :ensure t
-
   :bind
   (("C-." . embark-act)         ;; pick some comfortable binding
    ("C-;" . embark-dwim)        ;; good alternative: M-.
    ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
-
+  
   :init
-
   ;; Optionally replace the key help with a completing-read interface
   (setq prefix-help-command #'embark-prefix-help-command)
 
@@ -154,7 +155,6 @@
   :ensure t ; only need to install it, embark loads it after consult if found
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
-
 
 (use-package corfu
   ;; Optional customizations
@@ -186,6 +186,28 @@
   :ensure t
   :init (doom-modeline-mode 1))
 
+(use-package eldoc-box
+  ;; :config
+  ;; (defun rex/eldoc-box-scroll-up ()
+  ;;   "Scroll up in `eldoc-box--frame'"
+  ;;   (interactive)
+  ;;   (with-current-buffer eldoc-box--buffer
+  ;;     (with-selected-frame eldoc-box--frame
+  ;;       (scroll-down 3))))
+  ;; (defun rex/eldoc-box-scroll-down ()
+  ;;   "Scroll down in `eldoc-box--frame'"
+  ;;   (interactive)
+  ;;   (with-current-buffer eldoc-box--buffer
+  ;;     (with-selected-frame eldoc-box--frame
+  ;;       (scroll-up 3))))
+  :bind
+  ("M-j" . eldoc-box-help-at-point))
+
+(use-package flymake-ruff
+  :ensure t
+  :hook (python-mode . flymake-ruff-load)
+  (eglot-managed-mode . flymake-ruff-load))
+
 ;; Doom modeline only works with these and not "all-the-icons" anymore
 (use-package nerd-icons
   :ensure t)
@@ -205,6 +227,11 @@
 (use-package csv-mode
   :ensure t
   :hook (csv-mode . csv-align-mode))
+
+(use-package markdown-mode
+  :ensure t
+  :mode ("README\\.md\\'" . gfm-mode)
+  :init (setq markdown-command "multimarkdown"))
 
 ;; git porcelain
 ;; Main control is C-x g
@@ -230,3 +257,17 @@
 (use-package vterm
   :ensure t
   :bind (("C-c v" . vterm)))
+
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages
+   '(flymake-ruff which-key vterm vertico treesit-auto rainbow-delimiters pyenv-mode pet orderless nerd-icons-dired markdown-mode marginalia magit flycheck embark-consult eldoc-box eglot ef-themes doom-modeline csv-mode corfu)))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
