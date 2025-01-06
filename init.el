@@ -31,6 +31,8 @@
 
 (menu-bar-mode -1) ; Disable the menu bar
 
+(winner-mode t) ; Allow to undo window configurations
+
 ;; Make ESC quit prompts
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 
@@ -257,6 +259,15 @@
 (use-package vterm
   :ensure t
   :bind (("C-c v" . vterm)))
+
+;; To set the environment for each buffer, helps with LSPs and such
+(use-package envrc
+  :hook (after-init . envrc-global-mode))
+
+;; To switch windows faster
+(use-package ace-window
+  :ensure t
+  :bind ("M-o" . ace-window))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
