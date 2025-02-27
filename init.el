@@ -37,7 +37,7 @@
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 
 ;; Save emacs set-up on quitting
-(desktop-save-mode 1)
+;; (desktop-save-mode 1)
 
 ;; Initialize package sources
 (require 'package)
@@ -75,9 +75,9 @@
   (add-hook mode (lambda () (display-line-numbers-mode 0))))
 
 (dolist (mode '(org-mode-hook
-		python-mode-hook
-		c-mode-hook
-		c++-mode-hook))
+		python-ts-mode-hook
+		c-ts-mode-hook
+		c++-ts-mode-hook))
   (add-hook mode (lambda () (visual-line-mode 1))))
 
 (use-package treesit-auto
@@ -98,7 +98,13 @@
   ("M-g M-g" . consult-goto-line)
   ("M-g g" . consult-goto-line) ; I never use the alternative bind
   ("C-x f" . consult-find) ; I never use the alternative bind
-  ("C-s" . consult-line))
+  ("C-s" . consult-line)
+  ("M-g i" . consult-imenu)
+  )
+
+(use-package consult-ag
+  :bind
+  ("M-z" . consult-ag))
 
 ;; Backend completion style
 (use-package orderless
@@ -175,6 +181,11 @@
   :init
   (global-corfu-mode))
 
+(use-package nerd-icons-corfu
+  :ensure t
+  :init
+  (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter))
+
 ;; Make it pretty
 (use-package ef-themes
   :ensure t)
@@ -204,11 +215,6 @@
   ;;       (scroll-up 3))))
   :bind
   ("M-j" . eldoc-box-help-at-point))
-
-(use-package flymake-ruff
-  :ensure t
-  :hook (python-mode . flymake-ruff-load)
-  (eglot-managed-mode . flymake-ruff-load))
 
 ;; Doom modeline only works with these and not "all-the-icons" anymore
 (use-package nerd-icons
@@ -244,7 +250,57 @@
 
 (use-package eglot
   :ensure t
-  :hook ((python-ts-mode . eglot-ensure)))
+  :hook ((python-ts-mode . eglot-ensure)
+	 (c-ts-mode . eglot-ensure)
+	 (c-ts-mode . (lambda () (setq comment-start "//" comment-end "")))))
+
+;; Need to separately install ccls, sudo apt install works
+(with-eval-after-load 'eglot
+  (add-to-list 'eglot-server-programs
+	       '(c-ts-mode . ("ccls"))))
+
+;; copied from: https://github.com/blahgeek/emacs-lsp-booster
+;; must install executable
+;; for lsp-booster
+(defun lsp-booster--advice-json-parse (old-fn &rest args)
+  "Try to parse bytecode instead of json."
+  (or
+   (when (equal (following-char) ?#)
+     (let ((bytecode (read (current-buffer))))
+       (when (byte-code-function-p bytecode)
+         (funcall bytecode))))
+   (apply old-fn args)))
+(advice-add (if (progn (require 'json)
+                       (fboundp 'json-parse-buffer))
+                'json-parse-buffer
+              'json-read)
+            :around
+            #'lsp-booster--advice-json-parse)
+
+(defun lsp-booster--advice-final-command (old-fn cmd &optional test?)
+  "Prepend emacs-lsp-booster command to lsp CMD."
+  (let ((orig-result (funcall old-fn cmd test?)))
+    (if (and (not test?)                             ;; for check lsp-server-present?
+             (not (file-remote-p default-directory)) ;; see lsp-resolve-final-command, it would add extra shell wrapper
+             lsp-use-plists
+             (not (functionp 'json-rpc-connection))  ;; native json-rpc
+             (executable-find "emacs-lsp-booster"))
+        (progn
+          (when-let ((command-from-exec-path (executable-find (car orig-result))))  ;; resolve command from exec-path (in case not found in $PATH)
+            (setcar orig-result command-from-exec-path))
+          (message "Using emacs-lsp-booster for %s!" orig-result)
+          (cons "emacs-lsp-booster" orig-result))
+      orig-result)))
+(advice-add 'lsp-resolve-final-command :around #'lsp-booster--advice-final-command)
+
+;; Faster JSON-RPC and less I/O throttling
+(use-package eglot-booster
+	:after eglot
+	:config	(eglot-booster-mode))
+
+;; For scheme
+(use-package geiser-mit
+  :ensure t)
 
 ;; Download the font if it doesn't exist.
 ;; Needed for nerd-icons to function
@@ -260,11 +316,9 @@
   :ensure t
   :bind (("C-c v" . vterm)))
 
-;; To set the environment for each buffer, helps with LSPs and such
 (use-package envrc
   :hook (after-init . envrc-global-mode))
 
-;; To switch windows faster
 (use-package ace-window
   :ensure t
   :bind ("M-o" . ace-window))
@@ -275,7 +329,9 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
-   '(flymake-ruff which-key vterm vertico treesit-auto rainbow-delimiters pyenv-mode pet orderless nerd-icons-dired markdown-mode marginalia magit flycheck embark-consult eldoc-box eglot ef-themes doom-modeline csv-mode corfu)))
+   '(eglot-booster eglot ace-window nerd-icons-corfu geiser-mit consult-ag envrc which-key vterm vertico treesit-auto simple-httpd rainbow-delimiters pyenv-mode pet orderless nerd-icons-dired markdown-mode marginalia magit flymake-ruff flycheck embark-consult eldoc-box ef-themes doom-modeline csv-mode corfu))
+ '(package-vc-selected-packages
+   '((eglot-booster :vc-backend Git :url "https://github.com/jdtsmith/eglot-booster"))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
