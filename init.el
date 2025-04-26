@@ -71,7 +71,8 @@
 		eshell-mode-hook
 		shell-mode-hook
 		term-mode-hook
-		vterm-mode-hook))
+		vterm-mode-hook
+		writeroom-mode))
   (add-hook mode (lambda () (display-line-numbers-mode 0))))
 
 (dolist (mode '(org-mode-hook
@@ -99,6 +100,7 @@
   ("M-g g" . consult-goto-line) ; I never use the alternative bind
   ("C-x f" . consult-find) ; I never use the alternative bind
   ("C-s" . consult-line)
+  ("C-c s" . isearch-forward)
   ("M-g i" . consult-imenu)
   )
 
@@ -323,18 +325,18 @@
   :ensure t
   :bind ("M-o" . ace-window))
 
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(package-selected-packages
-   '(eglot-booster eglot ace-window nerd-icons-corfu geiser-mit consult-ag envrc which-key vterm vertico treesit-auto simple-httpd rainbow-delimiters pyenv-mode pet orderless nerd-icons-dired markdown-mode marginalia magit flymake-ruff flycheck embark-consult eldoc-box ef-themes doom-modeline csv-mode corfu))
- '(package-vc-selected-packages
-   '((eglot-booster :vc-backend Git :url "https://github.com/jdtsmith/eglot-booster"))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
+(use-package org2blog
+  :ensure t)
+
+(setq org2blog/wp-use-sourcecode-shortcode t)
+
+(setq org2blog/wp-image-upload t)
+
+(use-package visual-fill-column
+  :ensure t)
+
+(use-package writeroom-mode
+  :ensure t
+  :config
+  (set-fringe-mode 0))
+
