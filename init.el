@@ -7,10 +7,12 @@
 ;; install vterm (with external installs needed)
 ;; uses counsel and ivy for better navigation
 
-;;; Code:
-
-;; No more intro messages about the tutorial
-(setq inhibit-startup-message t)
+(setq-default
+ inhibit-startup-screen t               ; Disable start-up screen
+ inhibit-startup-message t              ; Disable startup message
+ inhibit-startup-echo-area-message t    ; Disable initial echo message
+ initial-scratch-message ""             ; Empty the initial *scratch* buffer
+ initial-buffer-choice t)               ; Open *scratch* buffer at init
 
 ;; Save ~ files and other backups all together
 (setq backup-directory-alist '(("." . "~/.emacs.d/backup"))
@@ -24,47 +26,49 @@
 (scroll-bar-mode -1) ; Disable scroll bar
 (tool-bar-mode -1) ; Disable toolbar
 (tooltip-mode -1) ; Disable tooltips
-(set-fringe-mode 10) ; Give more breathing room
-
-(set-frame-parameter nil 'alpha-background 100) ; For current frame, transparency
-(add-to-list 'default-frame-alist '(alpha-background . 100)) ; For all new frames henceforth
-
 (menu-bar-mode -1) ; Disable the menu bar
 
 (winner-mode t) ; Allow to undo window configurations
-
-;; Make ESC quit prompts
-(global-set-key (kbd "<escape>") 'keyboard-escape-quit)
-
-;; Save emacs set-up on quitting
-;; (desktop-save-mode 1)
 
 ;; Initialize package sources
 (require 'package)
 
 (setq package-archives '(("melpa" . "https://melpa.org/packages/")
-			 ("org" . "https://orgmode.org/elpa/")
-			 ("elpa" . "https://elpa.gnu.org/packages/")))
+ 			 ("org" . "https://orgmode.org/elpa/")
+ 			 ("elpa" . "https://elpa.gnu.org/packages/")))
 
 ;; Allows using older versions of packages for greater
 ;; compatibility
 (add-to-list 'package-archives
 	     (cons "gnu-devel" "https://elpa.gnu.org/devel/")
-	     t)
-
-(package-initialize)
-(unless package-archive-contents
-  (package-refresh-contents))
+ 	     t)
 
 ;; Initialize use-package on non-Linux platform
 (unless (package-installed-p 'use-package) ; use-package not installed by default
-  (package-install 'use-package))
+   (package-install 'use-package))
 
 (require 'use-package)
 (setq use-package-always-ensure t)
 
-(column-number-mode) ; Allow display of line number
 (global-display-line-numbers-mode t) ; Activate display of line number
+
+;; Make it pretty
+(use-package ef-themes
+  :ensure t
+  :config
+  ;; Use ef-themes-toggle to cycle through these
+  (setq ef-themes-to-toggle '(ef-day ef-dream))
+  (ef-themes-select 'ef-dream))
+
+(use-package spacious-padding
+  :ensure t
+  :config
+  (setq spacious-padding-subtle-frame-lines
+      '( :mode-line-active spacious-padding-line-active
+         :mode-line-inactive spacious-padding-line-inactive
+         :header-line-active spacious-padding-line-active
+         :header-line-inactive spacious-padding-line-inactive)))
+(spacious-padding-mode 1)
 
 ;; Disable line numbers for some modes
 (dolist (mode '(term-mode-hook
@@ -72,7 +76,7 @@
 		shell-mode-hook
 		term-mode-hook
 		vterm-mode-hook
-		writeroom-mode))
+		magit-mode-hook))
   (add-hook mode (lambda () (display-line-numbers-mode 0))))
 
 (dolist (mode '(org-mode-hook
@@ -89,7 +93,10 @@
   (global-treesit-auto-mode))
 
 (use-package vertico
-  :init (vertico-mode))
+  :init (vertico-mode)
+  :config
+  (setq vertico-cycle t)
+  (setq vertico-resize t))
 
 ;; Provides search and navigation commands
 (use-package consult
@@ -161,10 +168,9 @@
                  (window-parameters (mode-line-format . none)))))
 
 ;; Consult users will also want the embark-consult package.
+;; only need to install it, embark loads it after consult if found
 (use-package embark-consult
-  :ensure t ; only need to install it, embark loads it after consult if found
-  :hook
-  (embark-collect-mode . consult-preview-at-point-mode))
+  :ensure t)
 
 (use-package corfu
   ;; Optional customizations
@@ -183,44 +189,18 @@
   :init
   (global-corfu-mode))
 
+(use-package nerd-icons
+  ;; :custom
+  ;; The Nerd Font you want to use in GUI
+  ;; "Symbols Nerd Font Mono" is the default and is recommended
+  ;; but you can use any other Nerd Font if you want
+  ;; (nerd-icons-font-family "Cousine Nerd Font Mono")
+  )
+
 (use-package nerd-icons-corfu
   :ensure t
   :init
   (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter))
-
-;; Make it pretty
-(use-package ef-themes
-  :ensure t)
-;; Use ef-themes-toggle to cycle through these
-(setq ef-themes-to-toggle '(ef-autumn ef-symbiosis ef-maris-dark ef-elea-dark ef-duo-dark ef-dark ef-night))
-;; Change this to change the default theme
-(load-theme 'ef-dark :no-confirm)
-
-;; This changes the bar at the bottom of the screen
-(use-package doom-modeline
-  :ensure t
-  :init (doom-modeline-mode 1))
-
-(use-package eldoc-box
-  ;; :config
-  ;; (defun rex/eldoc-box-scroll-up ()
-  ;;   "Scroll up in `eldoc-box--frame'"
-  ;;   (interactive)
-  ;;   (with-current-buffer eldoc-box--buffer
-  ;;     (with-selected-frame eldoc-box--frame
-  ;;       (scroll-down 3))))
-  ;; (defun rex/eldoc-box-scroll-down ()
-  ;;   "Scroll down in `eldoc-box--frame'"
-  ;;   (interactive)
-  ;;   (with-current-buffer eldoc-box--buffer
-  ;;     (with-selected-frame eldoc-box--frame
-  ;;       (scroll-up 3))))
-  :bind
-  ("M-j" . eldoc-box-help-at-point))
-
-;; Doom modeline only works with these and not "all-the-icons" anymore
-(use-package nerd-icons
-  :ensure t)
 
 ;; Show pretty icons in dired mode too
 (use-package nerd-icons-dired
@@ -261,45 +241,6 @@
   (add-to-list 'eglot-server-programs
 	       '(c-ts-mode . ("ccls"))))
 
-;; copied from: https://github.com/blahgeek/emacs-lsp-booster
-;; must install executable
-;; for lsp-booster
-(defun lsp-booster--advice-json-parse (old-fn &rest args)
-  "Try to parse bytecode instead of json."
-  (or
-   (when (equal (following-char) ?#)
-     (let ((bytecode (read (current-buffer))))
-       (when (byte-code-function-p bytecode)
-         (funcall bytecode))))
-   (apply old-fn args)))
-(advice-add (if (progn (require 'json)
-                       (fboundp 'json-parse-buffer))
-                'json-parse-buffer
-              'json-read)
-            :around
-            #'lsp-booster--advice-json-parse)
-
-(defun lsp-booster--advice-final-command (old-fn cmd &optional test?)
-  "Prepend emacs-lsp-booster command to lsp CMD."
-  (let ((orig-result (funcall old-fn cmd test?)))
-    (if (and (not test?)                             ;; for check lsp-server-present?
-             (not (file-remote-p default-directory)) ;; see lsp-resolve-final-command, it would add extra shell wrapper
-             lsp-use-plists
-             (not (functionp 'json-rpc-connection))  ;; native json-rpc
-             (executable-find "emacs-lsp-booster"))
-        (progn
-          (when-let ((command-from-exec-path (executable-find (car orig-result))))  ;; resolve command from exec-path (in case not found in $PATH)
-            (setcar orig-result command-from-exec-path))
-          (message "Using emacs-lsp-booster for %s!" orig-result)
-          (cons "emacs-lsp-booster" orig-result))
-      orig-result)))
-(advice-add 'lsp-resolve-final-command :around #'lsp-booster--advice-final-command)
-
-;; Faster JSON-RPC and less I/O throttling
-(use-package eglot-booster
-	:after eglot
-	:config	(eglot-booster-mode))
-
 ;; For scheme
 (use-package geiser-mit
   :ensure t)
@@ -307,11 +248,19 @@
 ;; Download the font if it doesn't exist.
 ;; Needed for nerd-icons to function
 (unless (member "Cousine Nerd Font" (font-family-list))
-  (nerd-icons-install-fonts))
+   (nerd-icons-install-fonts))
 
 ;; Set the font everywhere
-(set-frame-font "Cousine Nerd Font 10" nil t)
-(setq doom-unicode-font (font-spec :family "Cousine Nerd Font" :size 10))
+(set-frame-font "Cousine Nerd Font" nil t)
+(let ((faces '(mode-line
+               mode-line-buffer-id
+               mode-line-emphasis
+               mode-line-highlight
+               mode-line-inactive
+	       default)))
+     (mapc
+      (lambda (face) (set-face-attribute face nil :height 90))
+      faces))
 
 ;; Terminal replacement
 (use-package vterm
@@ -326,17 +275,50 @@
   :bind ("M-o" . ace-window))
 
 (use-package org2blog
-  :ensure t)
+  :ensure t
+  :bind ("C-c w" . org2blog-user-interface))
 
-(setq org2blog/wp-use-sourcecode-shortcode t)
+(setq org2blog/wp-blog-alist
+      '(("Orthogonal Projections"
+         :url "https://orthogonal-projections.com/xmlrpc.php"
+         :username 
+	 :password )))
+
+(setq org2blog/wp-use-sourcecode-shortcode nil)
 
 (setq org2blog/wp-image-upload t)
 
-(use-package visual-fill-column
-  :ensure t)
+(setq org2blog/wp-use-wp-latex nil)
 
-(use-package writeroom-mode
-  :ensure t
-  :config
-  (set-fringe-mode 0))
+;; A few scrolling utils
+(keymap-global-set "C-S-l" "C-n C-l")
+(keymap-global-set "C-M-l" "C-p C-l")
+(keymap-global-set "C-S-n" 'forward-list)
+(keymap-global-set "C-S-p" 'backward-list)
+(keymap-global-set "C-S-f" 'forward-sexp)
+(keymap-global-set "C-S-b" 'backward-sexp)
+(keymap-global-set "C-S-k" 'kill-sexp)
+(keymap-global-set "C-S-SPC" 'mark-sexp)
 
+;; Save minbuffer histories
+(savehist-mode 1)
+
+;; Keeps track of recently visited files
+(recentf-mode 1)
+
+;; Modeline stolen from Prot
+;; (add-to-list 'load-path (locate-user-emacs-file "prot-modeline"))
+;; (require 'prot-emacs-modeline)
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages
+   '(which-key vterm vertico treesit-auto spacious-padding org2blog orderless nerd-icons-dired nerd-icons-corfu markdown-mode marginalia magit keycast geiser-mit envrc embark-consult ef-themes doric-themes csv-mode corfu consult-ag ace-window)))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
