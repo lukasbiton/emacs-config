@@ -233,8 +233,14 @@
 (use-package eglot
   :ensure t
   :hook ((python-ts-mode . eglot-ensure)
+	 (python-ts-mode . electric-pair-mode)
+	 (python-ts-mode . electric-quote-mode)
+	 (python-ts-mode . electric-indent-mode)
 	 (c-ts-mode . eglot-ensure)
-	 (c-ts-mode . (lambda () (setq comment-start "//" comment-end "")))))
+	 (c-ts-mode . (lambda () (setq comment-start "//" comment-end "")))
+	 (c-ts-mode . electric-pair-mode)
+	 (c-ts-mode . electric-quote-mode)
+	 (c-ts-mode . electric-indent-mode)))
 
 ;; Need to separately install ccls, sudo apt install works
 (with-eval-after-load 'eglot
