@@ -98,23 +98,6 @@
   (setq vertico-cycle t)
   (setq vertico-resize t))
 
-;; Provides search and navigation commands
-(use-package consult
-  :bind
-  ("C-x b" . consult-buffer)
-  ("C-x C-b" . consult-buffer) ; I never use the alternative bind
-  ("M-g M-g" . consult-goto-line)
-  ("M-g g" . consult-goto-line) ; I never use the alternative bind
-  ("C-x f" . consult-find) ; I never use the alternative bind
-  ("C-s" . consult-line)
-  ("C-c s" . isearch-forward)
-  ("M-g i" . consult-imenu)
-  )
-
-(use-package consult-ag
-  :bind
-  ("M-z" . consult-ag))
-
 ;; Backend completion style
 (use-package orderless
   :ensure t
@@ -137,6 +120,10 @@
   ;; the mode gets enabled right away. Note that this forces loading the
   ;; package.
   (marginalia-mode))
+
+;; Necessary to use both packages
+(use-package embark-consult
+  :ensure t)
 
 ;; Suggests keybindings
 (use-package embark
@@ -167,10 +154,20 @@
                  nil
                  (window-parameters (mode-line-format . none)))))
 
-;; Consult users will also want the embark-consult package.
-;; only need to install it, embark loads it after consult if found
-(use-package embark-consult
-  :ensure t)
+;; Provides search and navigation commands
+(use-package consult
+  :bind
+  ("C-x b" . consult-buffer)
+  ("C-x C-b" . consult-buffer) ; I never use the alternative bind
+  ("M-g M-g" . consult-goto-line)
+  ("M-g g" . consult-goto-line) ; I never use the alternative bind
+  ("C-x f" . consult-find) ; I never use the alternative bind
+  ("C-s" . consult-line)
+  ("C-c s" . isearch-forward)
+  ("M-g i" . consult-imenu)
+  ("M-z" . consult-grep)
+  :hook (completion-list-mode . consult-preview-at-point-mode)
+  )
 
 (use-package corfu
   ;; Optional customizations
@@ -268,6 +265,24 @@
       (lambda (face) (set-face-attribute face nil :height 90))
       faces))
 
+(defun set-font-size (new-size)
+  ;; Change font size for a few different modes
+  (interactive "New font size: ")
+  (let ((faces '(mode-line
+		 mode-line-buffer-id
+		 mode-line-emphasis
+		 mode-line-highlight
+		 mode-line-inactive
+		 default)))
+    (mapc
+     (lambda (face) (set-face-attribute face nil :height (* new-size 10)))
+     faces)))
+
+(defun toggle-theme ()
+  (interactive)
+  (ef-themes-toggle)
+  (set-font-size 9))
+
 ;; Terminal replacement
 (use-package vterm
   :ensure t
@@ -287,8 +302,8 @@
 (setq org2blog/wp-blog-alist
       '(("Orthogonal Projections"
          :url "https://orthogonal-projections.com/xmlrpc.php"
-         :username 
-	 :password )))
+         :username ""
+	 :password "")))
 
 (setq org2blog/wp-use-sourcecode-shortcode nil)
 
@@ -312,16 +327,16 @@
 ;; Keeps track of recently visited files
 (recentf-mode 1)
 
-;; Modeline stolen from Prot
-;; (add-to-list 'load-path (locate-user-emacs-file "prot-modeline"))
-;; (require 'prot-emacs-modeline)
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
-   '(which-key vterm vertico treesit-auto spacious-padding org2blog orderless nerd-icons-dired nerd-icons-corfu markdown-mode marginalia magit keycast geiser-mit envrc embark-consult ef-themes doric-themes csv-mode corfu consult-ag ace-window)))
+   '(ace-window consult-ag corfu csv-mode ef-themes embark-consult envrc
+		geiser-mit magit marginalia markdown-mode
+		nerd-icons-corfu nerd-icons-dired orderless org2blog
+		spacious-padding treesit-auto vertico vterm)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
