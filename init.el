@@ -27,6 +27,7 @@
 (tool-bar-mode -1) ; Disable toolbar
 (tooltip-mode -1) ; Disable tooltips
 (menu-bar-mode -1) ; Disable the menu bar
+(add-to-list 'default-frame-alist '(undecorated . t))
 
 (winner-mode t) ; Allow to undo window configurations
 
