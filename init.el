@@ -80,19 +80,6 @@
 		magit-mode-hook))
   (add-hook mode (lambda () (display-line-numbers-mode 0))))
 
-(dolist (mode '(org-mode-hook
-		python-ts-mode-hook
-		c-ts-mode-hook
-		c++-ts-mode-hook))
-  (add-hook mode (lambda () (visual-line-mode 1))))
-
-(use-package treesit-auto
-  :custom
-  (treesit-auto-install 'prompt)
-  :config
-  (treesit-auto-add-to-auto-mode-alist 'all)
-  (global-treesit-auto-mode))
-
 (use-package vertico
   :init (vertico-mode)
   :config
@@ -166,7 +153,7 @@
   ("C-s" . consult-line)
   ("C-c s" . isearch-forward)
   ("M-g i" . consult-imenu)
-  ("M-z" . consult-grep)
+  ("M-z" . consult-ripgrep)
   :hook (completion-list-mode . consult-preview-at-point-mode)
   )
 
@@ -187,13 +174,7 @@
   :init
   (global-corfu-mode))
 
-(use-package nerd-icons
-  ;; :custom
-  ;; The Nerd Font you want to use in GUI
-  ;; "Symbols Nerd Font Mono" is the default and is recommended
-  ;; but you can use any other Nerd Font if you want
-  ;; (nerd-icons-font-family "Cousine Nerd Font Mono")
-  )
+(use-package nerd-icons)
 
 (use-package nerd-icons-corfu
   :ensure t
@@ -228,17 +209,31 @@
   :config
   (setq magit-save-repository-buffers nil))
 
+
+(when (boundp 'treesit-extra-load-path)
+  (add-to-list 'treesit-extra-load-path "/usr/local/lib/")
+  (add-to-list 'treesit-extra-load-path "~/.local/lib/"))
+
+(setq treesit-language-source-alist
+      '((c "git@github.com:tree-sitter/tree-sitter-c.git" "v0.20.7")
+	(cpp "git@github.com:tree-sitter/tree-sitter-cpp.git" "v0.23.2")
+	(python "git@github.com:tree-sitter/tree-sitter-python.git" "v0.23.3")))
+
+(setq major-mode-remap-alist
+      '((python-mode . python-ts-mode)
+	(c-mode . c-ts-mode)
+	(cpp-mode . cpp-ts-mode)))
+
 (use-package eglot
   :ensure t
-  :hook ((python-ts-mode . eglot-ensure)
-	 (python-ts-mode . electric-pair-mode)
-	 (python-ts-mode . electric-quote-mode)
-	 (python-ts-mode . electric-indent-mode)
-	 (c-ts-mode . eglot-ensure)
-	 (c-ts-mode . (lambda () (setq comment-start "//" comment-end "")))
-	 (c-ts-mode . electric-pair-mode)
-	 (c-ts-mode . electric-quote-mode)
-	 (c-ts-mode . electric-indent-mode)))
+   :hook ((python-ts-mode . eglot-ensure)
+ 	 (python-ts-mode . electric-pair-mode)
+ 	 (python-ts-mode . electric-quote-mode)
+ 	 (python-ts-mode . electric-indent-mode)
+ 	 (c-ts-mode . eglot-ensure)
+ 	 (c-ts-mode . electric-pair-mode)
+ 	 (c-ts-mode . electric-quote-mode)
+ 	 (c-ts-mode . electric-indent-mode)))
 
 ;; Need to separately install ccls, sudo apt install works
 (with-eval-after-load 'eglot
@@ -249,13 +244,8 @@
 (use-package geiser-mit
   :ensure t)
 
-;; Download the font if it doesn't exist.
-;; Needed for nerd-icons to function
-(unless (member "Cousine Nerd Font" (font-family-list))
-   (nerd-icons-install-fonts))
-
 ;; Set the font everywhere
-(set-frame-font "Cousine Nerd Font" nil t)
+(set-frame-font "0xProto Nerd Font" nil t)
 (let ((faces '(mode-line
                mode-line-buffer-id
                mode-line-emphasis
@@ -268,7 +258,7 @@
 
 (defun set-font-size (new-size)
   ;; Change font size for a few different modes
-  (interactive "New font size: ")
+  (interactive "nNew font size: ")
   (let ((faces '(mode-line
 		 mode-line-buffer-id
 		 mode-line-emphasis
@@ -295,6 +285,9 @@
 (use-package ace-window
   :ensure t
   :bind ("M-o" . ace-window))
+
+(use-package vundo
+  :ensure t)
 
 (use-package org2blog
   :ensure t
@@ -334,10 +327,10 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
-   '(ace-window consult-ag corfu csv-mode ef-themes embark-consult envrc
-		geiser-mit magit marginalia markdown-mode
-		nerd-icons-corfu nerd-icons-dired orderless org2blog
-		spacious-padding treesit-auto vertico vterm)))
+   '(ace-window corfu csv-mode ef-themes embark-consult envrc geiser-mit
+		magit marginalia markdown-mode nerd-icons-corfu
+		nerd-icons-dired orderless org2blog spacious-padding
+		tree-sitter treesit vertico vterm vundo)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
