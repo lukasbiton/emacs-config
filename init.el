@@ -21,7 +21,7 @@
 (recentf-mode t) ; Keeps track of recently visited files
 (which-function-mode 1) ; Display in mode line the current function
 (windmove-default-keybindings) ; Move buffers with S-<arrow key>
-(display-line-numbers-mode 1) ; Show line number by default
+(global-display-line-numbers-mode 1) ; Show line number by default
 
 ;; Save ~ files and other backups all together
 (setq backup-directory-alist '(("." . "~/.emacs.d/backup"))
